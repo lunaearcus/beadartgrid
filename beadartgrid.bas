@@ -11,12 +11,15 @@ Sub CreateBeadArtGrid()
     Const GRID_WIDTH_UNITS As Long = 130  ' Grid width (units)
     Const DESIGN_BLOCK_HEIGHT As Long = 8 ' Design input area height (units)
 
+    Const PRIME_NUMBER_FOR_DESIGN_FG As Long = 2
+    Const PRIME_NUMBER_FOR_DESIGN_BASELINE As Long = 3
+
     Dim DESIGN_BG_COLOR: DESIGN_BG_COLOR = RGB(255, 255, 224) ' Design input area background color
     Dim ConditionalRules() As Variant: ConditionalRules = Array( _
-        Array("2", RGB(192, 192, 192)), _
-        Array("4", RGB(224, 224, 224)), _
-        Array("3", RGB(244, 244, 192)), _
-        Array("6", RGB(244, 244, 192)) _
+        Array(Str(PRIME_NUMBER_FOR_DESIGN_FG), RGB(192, 192, 192)), _
+        Array(Str(PRIME_NUMBER_FOR_DESIGN_FG * 2), RGB(224, 224, 224)), _
+        Array(Str(PRIME_NUMBER_FOR_DESIGN_BASELINE), RGB(244, 244, 192)), _
+        Array(Str(PRIME_NUMBER_FOR_DESIGN_BASELINE * 2), RGB(244, 244, 192)) _
     )
 
     ' --- Initialization ---
@@ -58,23 +61,21 @@ Sub CreateBeadArtGrid()
         Dim designTopUnit As Long: designTopUnit = designBottomUnit - DESIGN_BLOCK_HEIGHT + 1
 
         Dim shiftUnitLeft As Long: shiftUnitLeft = -Int(-((i - 1) - 1) / 2)
-        Dim designBottomUnitLeft As Long: designBottomUnitLeft = GRID_HEIGHT_UNITS - shiftUnitLeft
-        Dim designTopUnitLeft As Long: designTopUnitLeft = designBottomUnitLeft - DESIGN_BLOCK_HEIGHT + 1
+        Dim designTopUnitLeft As Long: designTopUnitLeft = GRID_HEIGHT_UNITS - shiftUnitLeft - DESIGN_BLOCK_HEIGHT + 1
 
         Dim shiftUnitRight As Long: shiftUnitRight = -Int(-((i - 1) + 1) / 2)
-        Dim designBottomUnitRight As Long: designBottomUnitRight = GRID_HEIGHT_UNITS - shiftUnitRight
-        Dim designTopUnitRight As Long: designTopUnitRight = designBottomUnitRight - DESIGN_BLOCK_HEIGHT + 1
+        Dim designTopUnitRight As Long: designTopUnitRight = GRID_HEIGHT_UNITS - shiftUnitRight - DESIGN_BLOCK_HEIGHT + 1
 
         ' a) Fill design input area with yellow
         For j = IIf(designTopUnit > 0, designTopUnit, 1) To designBottomUnit
             Dim isBaseLineUnitCol As Boolean, isBaseLineUnitRow As Boolean, remainder As Long
-            remainder = (i + 13) Mod 17
-            isBaseLineUnitCol = remainder Mod 2 = 0 And remainder <= 14
+            remainder = (i + 2 * DESIGN_BLOCK_HEIGHT - 3) Mod (2 * DESIGN_BLOCK_HEIGHT + 1)
+            isBaseLineUnitCol = remainder Mod 2 = 0 And remainder < (2 * DESIGN_BLOCK_HEIGHT - 1)
             isBaseLineUnitRow = (j - designTopUnit - Int(remainder / 2)) = 0
             With ws.Cells(ToExcelRow(j, i), i)
                 .Interior.Color = DESIGN_BG_COLOR
                 .MergeArea.Locked = False
-                .Formula = IIf(isBaseLineUnitCol And isBaseLineUnitRow, "3", "")
+                .Formula = IIf(isBaseLineUnitCol And isBaseLineUnitRow, Str(PRIME_NUMBER_FOR_DESIGN_BASELINE), "")
             End With
         Next j
 
@@ -108,7 +109,7 @@ Sub CreateBeadArtGrid()
     Next cf
 
     ' --- Finalization ---
-    ws.Cells(1, 1).Select
+    ws.Cells(ToExcelRow(GRID_HEIGHT_UNITS - DESIGN_BLOCK_HEIGHT + 1, 1), 1).Select
     ws.Protect
     Application.Calculation = xlCalculationAutomatic
     Application.ScreenUpdating = True
